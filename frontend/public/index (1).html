@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Series Vault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg:          #07080f;
+      --bg-1:        #0e0f1c;
+      --bg-2:        #141527;
+      --bg-3:        #1b1d35;
+      --surface:     rgba(255,255,255,0.04);
+      --surface-h:   rgba(255,255,255,0.07);
+      --border:      rgba(255,255,255,0.07);
+      --border-h:    rgba(255,255,255,0.13);
+
+      --accent:      #c850c0;
+      --accent-2:    #4158d0;
+      --accent-3:    #ffcc70;
+      --neon:        #e040fb;
+      --neon-blue:   #536dfe;
+      --neon-cyan:   #00e5ff;
+
+      --grad-main:   linear-gradient(135deg, #4158d0 0%, #c850c0 46%, #ffcc70 100%);
+      --grad-card:   linear-gradient(160deg, rgba(65,88,208,0.08) 0%, rgba(200,80,192,0.05) 100%);
+      --grad-pill:   linear-gradient(90deg, #4158d0, #c850c0);
+      --grad-btn:    linear-gradient(135deg, #c850c0 0%, #4158d0 100%);
+      --grad-glow:   radial-gradient(ellipse at center, rgba(200,80,192,0.15) 0%, transparent 70%);
+
+      --text:        #f0f0fc;
+      --text-2:      #a0a0c0;
+      --text-3:      #60607a;
+
+      --radius-sm:   10px;
+      --radius-md:   16px;
+      --radius-lg:   22px;
+      --radius-xl:   30px;
+
+      --shadow:      0 4px 24px rgba(0,0,0,0.5);
+      --shadow-lg:   0 12px 48px rgba(0,0,0,0.7);
+
+      --transition:  0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --spring:      0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(65,88,208,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(200,80,192,0.12) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ─── Scrollbar ─────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(200,80,192,0.3); border-radius: 4px; }
+
+    /* ─── App Shell ─────────────────────────────────────────────────────── */
+    #app {
+      position: relative; z-index: 1;
+      max-width: 480px; margin: 0 auto;
+      padding: 0 0 100px;
+      min-height: 100dvh;
+    }
+
+    /* ─── Header ────────────────────────────────────────────────────────── */
+    .header {
+      padding: 20px 20px 0;
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(to bottom, var(--bg) 80%, transparent);
+    }
+
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .logo-icon {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: var(--grad-btn);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px rgba(200,80,192,0.4);
+    }
+
+    .logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800; font-size: 1.25rem;
+      background: var(--grad-main); -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; background-clip: text;
+      letter-spacing: -0.02em;
+    }
+
+    .header-count {
+      font-size: 0.72rem; color: var(--text-3);
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 20px;
+      font-family: 'Outfit', sans-serif; font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    /* ─── Search ────────────────────────────────────────────────────────── */
+    .search-wrap {
+      position: relative; margin-bottom: 20px;
+    }
+
+    .search-icon {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--text-3); font-size: 16px; pointer-events: none;
+      transition: color var(--transition);
+    }
+
+    .search-input {
+      width: 100%; padding: 14px 44px 14px 46px;
+      background: var(--bg-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem; outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .search-input::placeholder { color: var(--text-3); }
+
+    .search-input:focus {
+      border-color: rgba(200,80,192,0.5);
+      background: var(--bg-3);
+      box-shadow: 0 0 0 3px rgba(200,80,192,0.1), 0 0 20px rgba(200,80,192,0.1);
+    }
+
+    .search-input:focus ~ .search-icon,
+    .search-wrap:focus-within .search-icon { color: var(--accent); }
+
+    .search-clear {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--surface-h); border: none; cursor: pointer;
+      color: var(--text-2); font-size: 14px; display: none;
+      align-items: center; justify-content: center;
+      transition: all var(--transition);
+    }
+    .search-clear:hover { background: rgba(200,80,192,0.2); color: var(--accent); }
+    .search-clear.visible { display: flex; }
+
+    /* ─── Section Label ─────────────────────────────────────────────────── */
+    .section-label {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 20px; margin-bottom: 14px;
+      font-family: 'Outfit', sans-serif; font-size: 0.75rem;
+      font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-3);
+    }
+
+    .section-label-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--grad-pill);
+    }
+
+    /* ─── Series List ────────────────────────────────────────────────────── */
+    .series-list {
+      padding: 0 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    /* ─── Series Card ─────────────────────────────────────────────────────── */
+    .series-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform var(--spring), border-color var(--transition), box-shadow var(--transition);
+      display: flex; align-items: stretch;
+      min-height: 96px;
+      animation: cardIn 0.4s cubic-bezier(0.34,1.2,0.64,1) both;
+    }
+
+    .series-card:active { transform: scale(0.975); }
+
+    .series-card:hover {
+      border-color: var(--border-h);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(200,80,192,0.1);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .card-poster {
+      width: 70px; flex-shrink: 0;
+      background: var(--bg-2);
+      position: relative; overflow: hidden;
+    }
+
+    .card-poster img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .series-card:hover .card-poster img { transform: scale(1.06); }
+
+    .card-poster-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; background: var(--bg-2);
+    }
+
+    .card-body {
+      flex: 1; padding: 14px 14px 14px 14px;
+      display: flex; flex-direction: column; justify-content: center; gap: 6px;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700; font-size: 0.95rem;
+      color: var(--text); line-height: 1.3;
+      letter-spacing: -0.01em;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+
+    .meta-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.7rem; font-weight: 500;
+      padding: 3px 8px; border-radius: 20px;
+      font-family: 'Outfit', sans-serif; letter-spacing: 0.02em;
+    }
+
+    .pill-year {
+      background: rgba(255,255,255,0.06); color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+
+    .pill-rating {
+      background: rgba(255,204,112,0.12); color: var(--accent-3);
+      border: 1px solid rgba(255,204,112,0.2);
+    }
+
+    .pill-genre {
+      background: rgba(65,88,208,0.12); color: #8da4ff;
+      border: 1px solid rgba(65,88,208,0.2);
+    }
+
+    .card-langs {
+      display: flex; gap: 4px; flex-wrap: wrap;
+    }
+
+    .lang-tag {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em;
+      padding: 2px 7px; border-radius: 6px;
+      background: rgba(200,80,192,0.1);
+      color: rgba(200,80,192,0.85);
+      border: 1px solid rgba(200,80,192,0.2);
+      font-family: 'Outfit', sans-serif;
+      text-transform: uppercase;
+    }
+
+    .card-arrow {
+      align-self: center; padding-right: 14px;
+      color: var(--text-3); font-size: 14px;
+      transition: transform var(--transition), color var(--transition);
+    }
+
+    .series-card:hover .card-arrow {
+      transform: translateX(3px);
+      color: var(--accent);
+    }
+
+    /* ─── Empty / Loading / Error States ─────────────────────────────────── */
+    .state-box {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 12px;
+      padding: 60px 24px; text-align: center;
+    }
+
+    .state-icon {
+      font-size: 48px; margin-bottom: 4px;
+      animation: floatIcon 3s ease-in-out infinite;
+    }
+
+    @keyframes floatIcon {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .state-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700; font-size: 1.1rem; color: var(--text);
+    }
+
+    .state-sub {
+      font-size: 0.85rem; color: var(--text-3); max-width: 240px; line-height: 1.5;
+    }
+
+    /* Skeleton loader */
+    .skeleton-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      height: 96px; overflow: hidden;
+      display: flex;
+    }
+
+    .skeleton-poster { width: 70px; background: var(--bg-2); flex-shrink: 0; }
+    .skeleton-body { flex: 1; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .skeleton-line {
+      border-radius: 6px; background: var(--bg-3);
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; }
+    }
+
+    /* ─── DETAIL PANEL (slide-up sheet) ─────────────────────────────────── */
+    .panel-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(7,8,15,0.7);
+      backdrop-filter: blur(4px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .panel-overlay.open { opacity: 1; pointer-events: all; }
+
+    .panel {
+      position: fixed; inset: 0; z-index: 201;
+      background: var(--bg-1);
+      border-radius: 0;
+      border: none;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+    }
+
+    .panel.open {
+      transform: translateY(0);
+    }
+
+    .panel-handle { display: none; }
+
+    /* Panel hero */
+    .panel-hero {
+      position: relative; width: 100%; height: 260px;
+      overflow: hidden; margin-bottom: 0;
+    }
+
+    .panel-hero img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
+    .panel-hero-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 64px;
+      background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    }
+
+    .panel-hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, var(--bg-1) 0%, rgba(14,15,28,0.3) 60%, transparent 100%);
+    }
+
+    .panel-content { padding: 20px 20px 40px; }
+
+    .panel-series-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800; font-size: 1.4rem;
+      letter-spacing: -0.025em; line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .panel-series-meta {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px;
+    }
+
+    /* ─── Selector groups ─────────────────────────────────────────────────── */
+    .selector-group {
+      margin-bottom: 20px;
+    }
+
+    .selector-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-3); margin-bottom: 10px;
+    }
+
+    .selector-pills {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+
+    .sel-pill {
+      padding: 8px 14px; border-radius: var(--radius-md);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-2);
+      font-family: 'Outfit', sans-serif; font-weight: 600;
+      font-size: 0.82rem; cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      flex: 1 1 calc(33.333% - 8px);
+      max-width: calc(50% - 4px);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .sel-pill:hover {
+      border-color: rgba(200,80,192,0.4);
+      color: var(--text);
+      background: rgba(200,80,192,0.06);
+    }
+
+    .sel-pill.active {
+      border-color: var(--accent);
+      background: rgba(200,80,192,0.15);
+      color: var(--accent);
+      box-shadow: 0 0 12px rgba(200,80,192,0.2);
+    }
+
+    /* Episode pills — 4 per row */
+    .sel-pill.ep-pill {
+      flex: 1 1 calc(25% - 8px);
+      max-width: calc(25% - 6px);
+      text-align: center;
+      padding: 8px 6px;
+      font-size: 0.78rem;
+    }
+
+    /* ─── Action button ─────────────────────────────────────────────────── */
+    .get-btn-wrap {
+      margin-top: 28px;
+    }
+
+    .get-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 16px 24px;
+      border-radius: var(--radius-xl);
+      border: none; cursor: pointer;
+      background: var(--grad-btn);
+      color: #fff;
+      font-family: 'Outfit', sans-serif; font-weight: 800;
+      font-size: 1rem; letter-spacing: 0.02em;
+      box-shadow: 0 4px 24px rgba(200,80,192,0.4);
+      transition: all var(--transition);
+      position: relative; overflow: hidden;
+    }
+
+    .get-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+      opacity: 0; transition: opacity var(--transition);
+    }
+
+    .get-btn:hover::before { opacity: 1; }
+    .get-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,80,192,0.5); }
+    .get-btn:active { transform: scale(0.97); }
+
+    .get-btn:disabled {
+      background: var(--bg-3); color: var(--text-3);
+      box-shadow: none; cursor: default; transform: none;
+    }
+
+    .get-btn .btn-icon { font-size: 18px; }
+
+    .get-btn.loading .btn-text { opacity: 0; }
+    .get-btn.loading::after {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Toast ─────────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--bg-3); border: 1px solid var(--border-h);
+      color: var(--text); padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem; font-weight: 500;
+      white-space: nowrap; z-index: 500;
+      box-shadow: var(--shadow-lg);
+      transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1), opacity 0.3s ease;
+      opacity: 0;
+      max-width: calc(100vw - 40px);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.toast-error { border-color: rgba(244,67,54,0.4); }
+    .toast.toast-success { border-color: rgba(76,175,80,0.4); }
+
+    /* ─── Divider ────────────────────────────────────────────────────────── */
+    .divider {
+      height: 1px; background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* ─── Staggered animation delay for list items ───────────────────────── */
+    .series-card:nth-child(1)  { animation-delay: 0.00s; }
+    .series-card:nth-child(2)  { animation-delay: 0.04s; }
+    .series-card:nth-child(3)  { animation-delay: 0.08s; }
+    .series-card:nth-child(4)  { animation-delay: 0.12s; }
+    .series-card:nth-child(5)  { animation-delay: 0.16s; }
+    .series-card:nth-child(6)  { animation-delay: 0.20s; }
+    .series-card:nth-child(7)  { animation-delay: 0.24s; }
+    .series-card:nth-child(8)  { animation-delay: 0.28s; }
+    .series-card:nth-child(9)  { animation-delay: 0.32s; }
+    .series-card:nth-child(10) { animation-delay: 0.36s; }
+
+    /* ─── Ad Slot Containers (network-agnostic) ─────────────────────────────── */
+
+    /* Native Banner Ad — below search bar */
+    .ad-slot-native-banner {
+      margin: 0 16px 16px;
+      border-radius: var(--radius-lg);
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .ad-slot-native-banner::before {
+      content: 'AD';
+      position: absolute;
+      top: 6px; right: 10px;
+      font-size: 0.58rem; letter-spacing: 0.08em;
+      color: var(--text-3);
+      font-family: 'Outfit', sans-serif; font-weight: 700; opacity: 0.6;
+    }
+
+    /* In-feed Ad — between cards */
+    .ad-slot-infeed {
+      border-radius: var(--radius-lg);
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      min-height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+    }
+    .ad-slot-infeed::before {
+      content: 'AD';
+      position: absolute;
+      top: 6px; right: 10px;
+      font-size: 0.58rem; letter-spacing: 0.08em;
+      color: var(--text-3);
+      font-family: 'Outfit', sans-serif; font-weight: 700; opacity: 0.6;
+    }
+
+    /* Sticky Bottom Banner */
+    .ad-slot-sticky-banner {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 400;
+      background: rgba(7, 8, 15, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      padding: 8px 16px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .ad-slot-sticky-banner::before {
+      content: 'AD';
+      position: absolute;
+      top: 4px; right: 10px;
+      font-size: 0.58rem; letter-spacing: 0.08em;
+      color: var(--text-3);
+      font-family: 'Outfit', sans-serif; font-weight: 700; opacity: 0.5;
+    }
+
+    /* Push body content above sticky banner */
+    body.has-sticky-ad #app { padding-bottom: 76px; }
+
+    @media (max-width: 480px) {
+      .ad-slot-native-banner { min-height: 70px; margin: 0 12px 14px; }
+      .ad-slot-infeed        { min-height: 88px; }
+      .ad-slot-sticky-banner { min-height: 56px; padding: 6px 12px; }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-top">
+        <div class="logo">
+          <div class="logo-icon">🎬</div>
+          <span class="logo-text">Series Vault</span>
+        </div>
+        <span class="header-count" id="seriesCount">Loading…</span>
+      </div>
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="none" width="16" height="16">
+          <circle cx="8.5" cy="8.5" r="5.75" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <input
+          type="search" class="search-input" id="searchInput"
+          placeholder="Search series, title…"
+          autocomplete="off" spellcheck="false"
+        />
+        <button class="search-clear" id="searchClear" aria-label="Clear search">✕</button>
+      </div>
+    </div>
+
+    <!-- AD SLOT: Native Banner — inject banner/image ad here -->
+    <div class="ad-slot-native-banner" id="adSlotNativeBanner" aria-label="Advertisement">
+      <!-- AD_SLOT_NATIVE_BANNER -->
+    </div>
+
+    <!-- Section label -->
+    <div class="section-label" id="sectionLabel">
+      <span class="section-label-dot"></span>
+      <span id="sectionLabelText">Latest Added</span>
+    </div>
+
+    <!-- Series list -->
+    <div class="series-list" id="seriesList">
+      <!-- Skeleton placeholders -->
+      <div class="skeleton-card">
+        <div class="skeleton-poster"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line" style="height:14px;width:70%"></div>
+          <div class="skeleton-line" style="height:11px;width:45%"></div>
+          <div class="skeleton-line" style="height:10px;width:55%"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-poster"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line" style="height:14px;width:80%"></div>
+          <div class="skeleton-line" style="height:11px;width:35%"></div>
+          <div class="skeleton-line" style="height:10px;width:60%"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-poster"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line" style="height:14px;width:60%"></div>
+          <div class="skeleton-line" style="height:11px;width:50%"></div>
+          <div class="skeleton-line" style="height:10px;width:40%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel overlay -->
+  <div class="panel-overlay" id="panelOverlay"></div>
+
+  <!-- Detail panel -->
+  <div class="panel" id="panel" role="dialog" aria-modal="true">
+    <div class="panel-handle"></div>
+    <div id="panelHero" class="panel-hero">
+      <button class="panel-back" id="panelBack" aria-label="Back">&#8592;</button>
+      <div class="panel-hero-placeholder">🎬</div>
+    </div>
+    <div class="panel-content" id="panelContent">
+      <!-- filled dynamically -->
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="alert"></div>
+
+  <script>
+  'use strict';
+
+  // ─── Telegram Web App init ─────────────────────────────────────────────────
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  // ─── Config & State ────────────────────────────────────────────────────────
+  const API_BASE = '';   // same origin
+  let allSeries   = [];
+  let filtered    = [];
+  let botUsername = '';
+  let searchTimer = null;
+  let panelSeries = null;  // currently open series doc
+  let activeAds   = {};    // keyed by slot: { banner, infeed, sticky }
+
+  // Selection state
+  let sel = { langId: null, seasonId: null, episodeId: null, qualityId: null };
+
+  // ─── DOM refs ──────────────────────────────────────────────────────────────
+  const $list        = document.getElementById('seriesList');
+  const $search      = document.getElementById('searchInput');
+  const $clear       = document.getElementById('searchClear');
+  const $count       = document.getElementById('seriesCount');
+  const $label       = document.getElementById('sectionLabelText');
+  const $overlay     = document.getElementById('panelOverlay');
+  const $panel       = document.getElementById('panel');
+  const $panelHero   = document.getElementById('panelHero');
+  const $panelContent= document.getElementById('panelContent');
+  const $toast       = document.getElementById('toast');
+
+  // ─── Utilities ─────────────────────────────────────────────────────────────
+  function esc(str) {
+    return String(str ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let toastTimer;
+  function showToast(msg, type = '') {
+    clearTimeout(toastTimer);
+    $toast.textContent = msg;
+    $toast.className = 'toast' + (type ? ` toast-${type}` : '');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { $toast.classList.add('show'); });
+    });
+    toastTimer = setTimeout(() => { $toast.classList.remove('show'); }, 3000);
+  }
+
+  // ─── Ads ───────────────────────────────────────────────────────────────────
+
+  function _adMedia(ad) {
+    let el;
+    if (ad.type === 'video') {
+      el = document.createElement('video');
+      el.src = ad.file_url;
+      el.autoplay = true; el.muted = true; el.loop = true; el.playsInline = true;
+    } else {
+      el = document.createElement('img');
+      el.src = ad.file_url;
+      el.alt = 'Advertisement';
+      el.loading = 'lazy';
+    }
+    el.style.cssText = 'width:100%;display:block;height:100%;object-fit:cover;';
+    return el;
+  }
+
+  function _fillSlot(el, ad) {
+    if (!el) return;
+    el.innerHTML = '';                          // clear placeholder comment
+    el.appendChild(_adMedia(ad));
+    if (ad.click_url) {
+      el.style.cursor = 'pointer';
+      el.onclick = () => window.open(ad.click_url, '_blank', 'noopener');
+    }
+  }
+
+  async function loadAds() {
+    try {
+      const r = await fetch('/api/ads/active');
+      const d = await r.json();
+      if (!d.ok) return;
+      activeAds = {};
+      (d.ads || []).forEach(a => { activeAds[a.slot] = a; });
+
+      // Banner slot (always present in DOM)
+      if (activeAds.banner) {
+        _fillSlot(document.getElementById('adSlotNativeBanner'), activeAds.banner);
+      }
+
+      // Sticky slot — create element and append to body once
+      if (activeAds.sticky && !document.getElementById('adSlotSticky')) {
+        const sticky = document.createElement('div');
+        sticky.id = 'adSlotSticky';
+        sticky.className = 'ad-slot-sticky-banner';
+        sticky.setAttribute('aria-label', 'Advertisement');
+        _fillSlot(sticky, activeAds.sticky);
+        document.body.appendChild(sticky);
+        document.body.classList.add('has-sticky-ad');
+      }
+
+      // Infeed slots are injected by renderList() — fill any that already exist
+      applyInfeedAds();
+    } catch (e) { /* silently skip */ }
+  }
+
+  function applyInfeedAds() {
+    if (!activeAds.infeed) return;
+    document.querySelectorAll('[id^="adSlotInfeed"]').forEach(el => {
+      if (!el.dataset.adFilled) {
+        _fillSlot(el, activeAds.infeed);
+        el.dataset.adFilled = '1';
+      }
+    });
+  }
+
+  // ─── Fetch config ──────────────────────────────────────────────────────────
+  async function loadConfig() {
+    try {
+      const r = await fetch(`${API_BASE}/api/config`);
+      const d = await r.json();
+      if (d.ok) botUsername = d.bot_username;
+    } catch (e) { console.warn('Config load failed:', e); }
+  }
+
+  // ─── Fetch & render series ─────────────────────────────────────────────────
+  async function loadSeries(q = '') {
+    try {
+      const url = q
+        ? `${API_BASE}/api/series?q=${encodeURIComponent(q)}`
+        : `${API_BASE}/api/series`;
+      const r = await fetch(url);
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error);
+      return d.series || [];
+    } catch (e) {
+      console.error('loadSeries:', e);
+      return null;
+    }
+  }
+
+  function getLangNames(series) {
+    return Object.values(series.languages || {}).map(l => l.name).filter(Boolean);
+  }
+
+  function renderCard(s) {
+    const langs = getLangNames(s);
+    const posterHtml = s.poster_url
+      ? `<img src="${esc(s.poster_url)}" alt="${esc(s.title)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=card-poster-placeholder>🎬</div>'" />`
+      : `<div class="card-poster-placeholder">🎬</div>`;
+
+    const langTagsHtml = langs.slice(0, 4).map(l =>
+      `<span class="lang-tag">${esc(l)}</span>`
+    ).join('');
+
+    const ratingHtml = s.rating
+      ? `<span class="meta-pill pill-rating">★ ${esc(s.rating)}</span>` : '';
+    const yearHtml = s.year
+      ? `<span class="meta-pill pill-year">${esc(s.year)}</span>` : '';
+    const genreHtml = s.genre
+      ? `<span class="meta-pill pill-genre">${esc(s.genre.split(',')[0])}</span>` : '';
+
+    return `
+      <div class="series-card" data-id="${esc(s.id)}" role="button" tabindex="0" aria-label="${esc(s.title)}">
+        <div class="card-poster">${posterHtml}</div>
+        <div class="card-body">
+          <div class="card-title">${esc(s.title)}</div>
+          <div class="card-meta">${yearHtml}${ratingHtml}${genreHtml}</div>
+          <div class="card-langs">${langTagsHtml}</div>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 8 14" fill="none" width="8" height="14">
+            <path d="M1 1l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>`;
+  }
+
+  function renderList(series) {
+    if (!series) {
+      $list.innerHTML = `
+        <div class="state-box">
+          <div class="state-icon">😕</div>
+          <div class="state-title">Failed to load</div>
+          <div class="state-sub">Check your connection and try again.</div>
+        </div>`;
+      $count.textContent = 'Error';
+      return;
+    }
+
+    if (series.length === 0) {
+      $list.innerHTML = `
+        <div class="state-box">
+          <div class="state-icon">🔍</div>
+          <div class="state-title">No series found</div>
+          <div class="state-sub">Try a different search term.</div>
+        </div>`;
+      $count.textContent = '0 series';
+      return;
+    }
+
+    $list.innerHTML = series.map(renderCard).join('');
+    $count.textContent = `${series.length} series`;
+
+    // ─── In-feed Ad Slot Injection (after every 4 cards) ─────────────────
+    (function injectInfeedAdSlots() {
+      const cards = Array.from($list.querySelectorAll('.series-card'));
+      if (cards.length < 5) return;
+      const AD_SLOT_HTML = '<div class="ad-slot-infeed" aria-label="Advertisement"><!-- AD_SLOT_INFEED --></div>';
+      let slotIndex = 0;
+      for (let i = 3; i < cards.length; i += 5) {
+        const targetCard = cards[i];
+        if (targetCard && targetCard.parentNode) {
+          const adNode = document.createElement('div');
+          adNode.innerHTML = AD_SLOT_HTML;
+          adNode.firstElementChild.id = 'adSlotInfeed' + slotIndex++;
+          targetCard.parentNode.insertBefore(adNode.firstElementChild, targetCard.nextSibling);
+        }
+      }
+    })();
+    applyInfeedAds();   // fill injected infeed slots if ad data is already loaded
+
+    // Bind card clicks
+    $list.querySelectorAll('.series-card').forEach(card => {
+      card.addEventListener('click', () => openPanel(card.dataset.id));
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') openPanel(card.dataset.id);
+      });
+    });
+  }
+
+  async function init() {
+    await loadConfig();
+    const series = await loadSeries();
+    allSeries = series || [];
+    filtered  = allSeries;
+    $label.textContent = 'Latest Added';
+    renderList(allSeries);
+    loadAds();   // fetch & inject ads after series list is rendered
+  }
+
+  // ─── Search ────────────────────────────────────────────────────────────────
+  $search.addEventListener('input', () => {
+    const q = $search.value.trim();
+    $clear.classList.toggle('visible', q.length > 0);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(async () => {
+      if (!q) {
+        $label.textContent = 'Latest Added';
+        renderList(allSeries);
+        return;
+      }
+      $label.textContent = `Results for "${q}"`;
+      $list.innerHTML = `
+        <div class="skeleton-card"><div class="skeleton-poster"></div>
+          <div class="skeleton-body">
+            <div class="skeleton-line" style="height:14px;width:65%"></div>
+            <div class="skeleton-line" style="height:11px;width:40%"></div>
+          </div></div>`;
+      const results = await loadSeries(q);
+      renderList(results);
+    }, 320);
+  });
+
+  $clear.addEventListener('click', () => {
+    $search.value = '';
+    $clear.classList.remove('visible');
+    $label.textContent = 'Latest Added';
+    renderList(allSeries);
+    $search.focus();
+  });
+
+  // ─── Detail Panel ──────────────────────────────────────────────────────────
+  async function openPanel(seriesId) {
+    // Fetch fresh from API
+    try {
+      const r = await fetch(`${API_BASE}/api/series/${seriesId}`);
+      const d = await r.json();
+      if (!d.ok) { showToast('Failed to load series', 'error'); return; }
+      panelSeries = d.series;
+    } catch (e) {
+      // Fall back to cached
+      panelSeries = allSeries.find(s => s.id === seriesId) || null;
+      if (!panelSeries) { showToast('Failed to load', 'error'); return; }
+    }
+
+    sel = { langId: null, seasonId: null, episodeId: null, qualityId: null };
+    buildPanel();
+    $overlay.classList.add('open');
+    $panel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (tg) tg.BackButton.show();
+  }
+
+  function closePanel() {
+    $overlay.classList.remove('open');
+    $panel.classList.remove('open');
+    document.body.style.overflow = '';
+    panelSeries = null;
+    if (tg) tg.BackButton.hide();
+  }
+
+  $overlay.addEventListener('click', closePanel);
+  document.getElementById('panelBack').addEventListener('click', closePanel);
+
+  if (tg) {
+    tg.BackButton.onClick(closePanel);
+  }
+
+  // Swipe down to close
+  let touchStartY = 0;
+  $panel.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+  $panel.addEventListener('touchmove', e => {
+    const dy = e.touches[0].clientY - touchStartY;
+    if ($panel.scrollTop === 0 && dy > 60) closePanel();
+  }, { passive: true });
+
+  // ─── Panel builder ─────────────────────────────────────────────────────────
+  function buildPanel() {
+    const s = panelSeries;
+
+    // Hero
+    const backBtn = `<button class="panel-back" onclick="document.getElementById('panel').classList.remove('open');document.getElementById('panelOverlay').classList.remove('open');document.body.style.overflow='';">&#8592;</button>`;
+    if (s.poster_url) {
+      $panelHero.innerHTML = backBtn + `<img src="${esc(s.poster_url)}" alt="${esc(s.title)}" onerror="this.parentNode.innerHTML=backBtn+'<div class=panel-hero-placeholder>🎬</div>'" />`;
+    } else {
+      $panelHero.innerHTML = backBtn + `<div class="panel-hero-placeholder">🎬</div>`;
+    }
+
+    // Pick default language: prefer English, else first
+    const langs = Object.entries(s.languages || {});
+    if (!langs.length) {
+      $panelContent.innerHTML = `<div class="state-box"><div class="state-icon">📭</div><div class="state-title">No content available</div></div>`;
+      return;
+    }
+
+    const engEntry = langs.find(([, v]) => /english/i.test(v.name));
+    const defaultLang = engEntry ? engEntry[0] : langs[0][0];
+    sel.langId = defaultLang;
+
+    // Pick default season: first one
+    const seasons = Object.entries(s.languages[defaultLang]?.seasons || {});
+    if (seasons.length) sel.seasonId = seasons[0][0];
+
+    renderPanelContent();
+  }
+
+  function renderPanelContent() {
+    const s = panelSeries;
+
+    // Meta HTML
+    const metaHtml = [
+      s.year   ? `<span class="meta-pill pill-year">${esc(s.year)}</span>` : '',
+      s.rating ? `<span class="meta-pill pill-rating">★ ${esc(s.rating)}</span>` : '',
+      s.genre  ? `<span class="meta-pill pill-genre">${esc(s.genre.split(',')[0])}</span>` : '',
+    ].join('');
+
+    // Language selector
+    const langs = Object.entries(s.languages || {});
+    const langPills = langs.map(([lid, lang]) => `
+      <button class="sel-pill ${lid === sel.langId ? 'active' : ''}"
+              data-sel="lang" data-id="${esc(lid)}">${esc(lang.name)}</button>
+    `).join('');
+
+    // Season selector
+    let seasonPills = '';
+    let seasonSection = '';
+    if (sel.langId && s.languages[sel.langId]) {
+      const seasons = Object.entries(s.languages[sel.langId].seasons || {});
+      if (seasons.length) {
+        seasonPills = seasons.map(([sid, season]) => `
+          <button class="sel-pill ${sid === sel.seasonId ? 'active' : ''}"
+                  data-sel="season" data-id="${esc(sid)}">${esc(season.name)}</button>
+        `).join('');
+        seasonSection = `
+          <div class="selector-group">
+            <div class="selector-label">Season</div>
+            <div class="selector-pills">${seasonPills}</div>
+          </div>
+          <div class="divider"></div>`;
+      }
+    }
+
+    // Episode & quality section — depends on whether episodes exist
+    let episodeSection = '';
+    let qualitySection = '';
+    let actionBtn      = '';
+
+    if (sel.langId && sel.seasonId) {
+      const season = s.languages[sel.langId]?.seasons?.[sel.seasonId];
+      if (season) {
+        const episodes  = Object.entries(season.episodes  || {});
+        const qualities = Object.entries(season.qualities || {});
+
+        if (episodes.length > 0) {
+          // ── Single-episode mode ──
+          // Default episode selection
+          if (!sel.episodeId || !season.episodes[sel.episodeId]) {
+            sel.episodeId = episodes[0][0];
+          }
+
+          const epPills = episodes.map(([eid, ep]) => `
+            <button class="sel-pill ep-pill ${eid === sel.episodeId ? 'active' : ''}"
+                    data-sel="episode" data-id="${esc(eid)}">${esc(ep.name)}</button>
+          `).join('');
+
+          episodeSection = `
+            <div class="selector-group">
+              <div class="selector-label">Episode</div>
+              <div class="selector-pills">${epPills}</div>
+            </div>`;
+
+          // Quality for selected episode
+          const epQualities = sel.episodeId
+            ? Object.entries(season.episodes[sel.episodeId]?.qualities || {})
+            : [];
+
+          if (epQualities.length) {
+            if (!sel.qualityId || !season.episodes[sel.episodeId]?.qualities[sel.qualityId]) {
+              sel.qualityId = epQualities[0][0];
+            }
+            const qPills = epQualities.map(([qid, q]) => `
+              <button class="sel-pill ${qid === sel.qualityId ? 'active' : ''}"
+                      data-sel="quality" data-id="${esc(qid)}">${esc(q.name)}</button>
+            `).join('');
+            qualitySection = `
+              <div class="selector-group" style="margin-top:16px">
+                <div class="selector-label">Quality</div>
+                <div class="selector-pills">${qPills}</div>
+              </div>`;
+          }
+
+          const canGet = sel.episodeId && sel.qualityId;
+          actionBtn = `
+            <div class="get-btn-wrap">
+              <button class="get-btn" id="getBtn" ${canGet ? '' : 'disabled'}>
+                <span class="btn-icon">📥</span>
+                <span class="btn-text">Get File</span>
+              </button>
+            </div>`;
+
+        } else if (qualities.length > 0) {
+          // ── Batch mode ──
+          if (!sel.qualityId || !season.qualities[sel.qualityId]) {
+            sel.qualityId = qualities[0][0];
+          }
+          sel.episodeId = null;
+
+          const qPills = qualities.map(([qid, q]) => `
+            <button class="sel-pill ${qid === sel.qualityId ? 'active' : ''}"
+                    data-sel="quality" data-id="${esc(qid)}">${esc(q.name)}</button>
+          `).join('');
+          qualitySection = `
+            <div class="selector-group">
+              <div class="selector-label">Quality</div>
+              <div class="selector-pills">${qPills}</div>
+            </div>`;
+
+          const canGet = !!sel.qualityId;
+          actionBtn = `
+            <div class="get-btn-wrap">
+              <button class="get-btn" id="getBtn" ${canGet ? '' : 'disabled'}>
+                <span class="btn-icon">📦</span>
+                <span class="btn-text">Get Files</span>
+              </button>
+            </div>`;
+        } else {
+          actionBtn = `
+            <div class="get-btn-wrap">
+              <button class="get-btn" disabled>
+                <span class="btn-icon">🚫</span>
+                <span class="btn-text">Not Available</span>
+              </button>
+            </div>`;
+        }
+      }
+    }
+
+    $panelContent.innerHTML = `
+      <div class="panel-series-title">${esc(s.title)}</div>
+      <div class="panel-series-meta">${metaHtml}</div>
+
+      <div class="selector-group">
+        <div class="selector-label">Language</div>
+        <div class="selector-pills">${langPills}</div>
+      </div>
+      <div class="divider"></div>
+
+      ${seasonSection}
+      ${episodeSection}
+      ${qualitySection}
+      ${actionBtn}
+    `;
+
+    // ── Bind selector pills ──
+    $panelContent.querySelectorAll('[data-sel]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.sel;
+        const id   = btn.dataset.id;
+        if (type === 'lang') {
+          sel.langId = id;
+          // Reset downstream
+          const firstSeason = Object.keys(panelSeries.languages[id]?.seasons || {})[0] || null;
+          sel.seasonId  = firstSeason;
+          sel.episodeId = null;
+          sel.qualityId = null;
+        } else if (type === 'season') {
+          sel.seasonId  = id;
+          sel.episodeId = null;
+          sel.qualityId = null;
+        } else if (type === 'episode') {
+          sel.episodeId = id;
+          sel.qualityId = null;
+        } else if (type === 'quality') {
+          sel.qualityId = id;
+        }
+        renderPanelContent();
+      });
+    });
+
+    // ── Bind Get button ──
+    const $getBtn = document.getElementById('getBtn');
+    if ($getBtn && !$getBtn.disabled) {
+      $getBtn.addEventListener('click', handleGetFile);
+    }
+  }
+
+  // ─── Get file / batch ──────────────────────────────────────────────────────
+  async function handleGetFile() {
+    const $btn = document.getElementById('getBtn');
+    if (!$btn || $btn.disabled) return;
+
+    $btn.classList.add('loading');
+    $btn.disabled = true;
+
+    try {
+      const params = new URLSearchParams({
+        series_id:  panelSeries.id,
+        lang_id:    sel.langId,
+        season_id:  sel.seasonId,
+        quality_id: sel.qualityId,
+        type:       sel.episodeId ? 'file' : 'batch',
+      });
+      if (sel.episodeId) params.set('episode_id', sel.episodeId);
+
+      const r = await fetch(`${API_BASE}/api/link?${params}`);
+      const d = await r.json();
+
+      if (!d.ok) {
+        showToast(d.error || 'Link not available', 'error');
+        return;
+      }
+
+      const link = d.bot_link;
+
+      // Redirect to bot PM deep-link.
+      // Use Telegram WebApp API when running inside Telegram (correctly opens bot PM),
+      // otherwise open in a new tab so the OS/browser can hand off to the Telegram app.
+      showToast('Opening Telegram bot…', 'success');
+      setTimeout(() => {
+        const tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.openTelegramLink) {
+          tg.openTelegramLink(link);
+        } else {
+          window.open(link, '_blank');
+        }
+      }, 400);
+
+    } catch (e) {
+      console.error('handleGetFile:', e);
+      showToast('Something went wrong', 'error');
+    } finally {
+      $btn.classList.remove('loading');
+      $btn.disabled = false;
+    }
+  }
+
+  // ─── Boot ──────────────────────────────────────────────────────────────────
+  init();
+
+  // ─── Load & inject dynamic ads from bot ───────────────────────────────────
+  (async function loadAds() {
+    try {
+      const r = await fetch(`${API_BASE}/api/ads/active`);
+      const d = await r.json();
+      if (!d.ok || !d.ads || !d.ads.length) return;
+
+      d.ads.forEach(ad => {
+        const mediaEl = ad.type === 'video'
+          ? Object.assign(document.createElement('video'), {
+              src: ad.file_url, autoplay: true, muted: true,
+              loop: true, playsinline: true,
+              style: 'max-width:100%;max-height:100%;width:auto;height:auto;display:block;object-fit:contain;'
+            })
+          : Object.assign(document.createElement('img'), {
+              src: ad.file_url, alt: 'Advertisement',
+              style: 'max-width:100%;max-height:100%;width:auto;height:auto;display:block;object-fit:contain;'
+            });
+
+        const wrap = ad.click_url
+          ? Object.assign(document.createElement('a'), {
+              href: ad.click_url, target: '_blank', rel: 'noopener noreferrer',
+              style: 'display:flex;align-items:center;justify-content:center;width:100%;height:100%;'
+            })
+          : null;
+
+        if (wrap) wrap.appendChild(mediaEl);
+        const content = wrap || mediaEl;
+
+        if (ad.slot === 'banner') {
+          const el = document.getElementById('adSlotNativeBanner');
+          if (el) { el.innerHTML = ''; el.appendChild(content); }
+
+        } else if (ad.slot === 'sticky') {
+          const el = document.getElementById('adSlotStickyBanner');
+          if (el) { el.innerHTML = ''; el.appendChild(content); }
+
+        } else if (ad.slot === 'infeed') {
+          // Inject into every in-feed slot that was created by renderList
+          document.querySelectorAll('[id^="adSlotInfeed"]').forEach(el => {
+            const clone = content.cloneNode(true);
+            el.innerHTML = '';
+            el.appendChild(clone);
+          });
+        }
+      });
+    } catch (e) {
+      // Silently fail — ad errors must never break the app
+      console.warn('Ad load failed:', e);
+    }
+  })();
+
+  // ─── Sticky Banner Ad Slot ────────────────────────────────────────────────
+  (function() {
+    const sticky = document.createElement('div');
+    sticky.className = 'ad-slot-sticky-banner';
+    sticky.id = 'adSlotStickyBanner';
+    sticky.setAttribute('aria-label', 'Advertisement');
+    sticky.innerHTML = '<!-- AD_SLOT_STICKY_BANNER -->';
+    document.body.appendChild(sticky);
+    document.body.classList.add('has-sticky-ad');
+  })();
+  </script>
+</body>
+</html>
