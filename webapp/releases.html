@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <title>Today Releases</title>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#050816;
+  --surface:rgba(18,22,40,.72);
+  --card:rgba(16,20,36,.82);
+  --border:rgba(255,255,255,.08);
+
+  --accent:#ff4fa3;
+  --accent2:#7a5cff;
+  --accent3:#4da3ff;
+  --accent-db:#ff6b35;
+
+  --text:#f4f7ff;
+  --muted:#97a1ba;
+
+  --radius:18px;
+  --shadow:0 15px 40px rgba(0,0,0,.45),0 0 30px rgba(122,92,255,.08);
+}
+
+body{
+  background:
+    radial-gradient(circle at top left,rgba(122,92,255,.22),transparent 35%),
+    radial-gradient(circle at top right,rgba(255,79,163,.18),transparent 28%),
+    linear-gradient(180deg,#040714,#08101f 40%,#050816);
+  color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  padding-bottom:120px;
+}
+
+/* ── Loading ── */
+#loading{
+  position:fixed;inset:0;
+  background:#050816;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:14px;z-index:1000;
+}
+.ring{
+  width:54px;height:54px;
+  border:4px solid rgba(255,255,255,.08);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  box-shadow:0 0 18px rgba(255,79,163,.35);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{color:var(--muted);font-size:14px;}
+
+/* ── Search ── */
+.search-wrap{
+  padding:14px 16px;
+  position:sticky;top:0;z-index:20;
+  backdrop-filter:blur(20px);
+  background:rgba(5,8,22,.72);
+}
+.search-box{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(18,22,40,.78);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:14px 18px;
+  box-shadow:var(--shadow);
+}
+.search-box input{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--text);font-size:16px;
+}
+.search-box input::placeholder{color:#7f89a8;}
+.search-icon,.clear-btn{color:#aab2c5;font-size:18px;}
+.clear-btn{background:none;border:none;cursor:pointer;display:none;}
+
+/* ── Section headers ── */
+.section-header{
+  display:flex;align-items:center;gap:10px;
+  padding:20px 16px 8px;
+  font-size:12px;font-weight:800;
+  color:#b7bfd5;letter-spacing:1.4px;
+  text-transform:uppercase;
+}
+.section-header .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 0 14px rgba(255,79,163,.55);
+  flex-shrink:0;
+}
+.section-header.other .dot{
+  background:linear-gradient(135deg,var(--accent3),var(--accent2));
+  box-shadow:0 0 14px rgba(77,163,255,.55);
+}
+.section-header .count-pill{
+  margin-left:auto;
+  background:rgba(255,79,163,.15);
+  border:1px solid rgba(255,79,163,.25);
+  color:var(--accent);
+  font-size:11px;font-weight:700;
+  padding:3px 10px;border-radius:20px;
+}
+.section-header.other .count-pill{
+  background:rgba(77,163,255,.15);
+  border-color:rgba(77,163,255,.25);
+  color:var(--accent3);
+}
+
+/* ── Cards grid ── */
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:14px;
+  padding:6px 14px 10px;
+}
+
+/* ── Card ── */
+.card{
+  position:relative;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+  box-shadow:var(--shadow);
+  display:flex;flex-direction:column;
+}
+.card::before{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(122,92,255,.06),transparent 60%);
+  opacity:0;transition:opacity .2s;pointer-events:none;
+}
+.card:hover::before{opacity:1;}
+.card:hover{
+  transform:translateY(-3px) scale(1.01);
+  box-shadow:0 20px 50px rgba(0,0,0,.55),0 0 25px rgba(122,92,255,.18);
+  border-color:rgba(122,92,255,.35);
+}
+.card.db-card{border-color:rgba(255,107,53,.2);}
+.card.db-card:hover{
+  border-color:rgba(255,107,53,.45);
+  box-shadow:0 20px 50px rgba(0,0,0,.55),0 0 25px rgba(255,107,53,.18);
+}
+
+/* ── Poster ── */
+.card-poster-wrap{
+  width:100%;
+  /* Taller ratio for TMDB portrait posters (roughly 2:3) */
+  aspect-ratio:2/3;
+  overflow:hidden;
+  background:#0d1024;
+  position:relative;
+  flex-shrink:0;
+}
+.card-poster-wrap img{
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center top;
+  display:block;
+  transition:transform .3s ease;
+}
+.card:hover .card-poster-wrap img{transform:scale(1.04);}
+.poster-fallback{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;
+  background:linear-gradient(135deg,#0d1024,#131928);
+}
+/* Poster gradient overlay */
+.card-poster-wrap::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;
+  height:55%;
+  background:linear-gradient(to top,rgba(8,12,28,.95) 0%,transparent 100%);
+  pointer-events:none;
+}
+
+/* ── Badge (S02E05 etc) ── */
+.ep-badge{
+  position:absolute;
+  top:8px;right:8px;
+  background:rgba(10,14,30,.85);
+  border:1px solid rgba(255,79,163,.45);
+  color:var(--accent);
+  font-size:10px;font-weight:800;
+  padding:3px 8px;
+  border-radius:8px;
+  letter-spacing:.4px;
+  backdrop-filter:blur(8px);
+  z-index:2;
+  white-space:nowrap;
+}
+.card.db-card .ep-badge{
+  border-color:rgba(255,107,53,.5);
+  color:var(--accent-db);
+}
+
+/* ── Card info ── */
+.card-info{
+  padding:10px 10px 12px;
+  display:flex;flex-direction:column;gap:5px;
+  flex:1;
+}
+.card-title{
+  font-size:13px;font-weight:700;
+  color:var(--text);
+  line-height:1.35;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.card-meta{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--muted);flex-wrap:wrap;
+}
+.rating-star{color:#ffd700;font-size:10px;}
+.new-pill{
+  background:rgba(122,92,255,.18);
+  border:1px solid rgba(122,92,255,.35);
+  color:#a990ff;
+  font-size:10px;font-weight:700;
+  padding:1px 7px;border-radius:6px;
+}
+
+/* ── Empty / error states ── */
+.empty{
+  text-align:center;padding:60px 20px;
+  color:var(--muted);
+}
+.empty-icon{font-size:52px;margin-bottom:14px;}
+.empty p{font-size:14px;line-height:1.6;}
+
+/* ── Skeleton ── */
+@keyframes shimmer{
+  0%{background-position:-400px 0}
+  100%{background-position:400px 0}
+}
+.sk{
+  border-radius:var(--radius);
+  background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 75%);
+  background-size:800px 100%;
+  animation:shimmer 1.5s infinite linear;
+}
+.sk-header{height:24px;margin:20px 16px 8px;width:50%;}
+.sk-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:14px;padding:6px 14px;
+}
+.sk-card{
+  border-radius:var(--radius);
+  aspect-ratio:2/3.5;
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="ring"></div>
+  <p>Loading today's releases…</p>
+</div>
+
+<!-- Search -->
+<div class="search-wrap">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input id="search-input" type="text" placeholder="Search series, season, year…" autocomplete="off"/>
+    <button class="clear-btn" id="clear-btn" onclick="clearSearch()">✕</button>
+  </div>
+</div>
+
+<div id="content"></div>
+
+<script>
+/* ── Escape helper ── */
+function esc(s){
+  return String(s??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+/* ── State ── */
+let allData = {db_series:[], other_series:[]};
+let searchQuery = '';
+
+/* ── Card HTML ── */
+function cardHTML(item){
+  const isNew = !item.rating || item.rating < 0.1;
+  const ratingStr = !isNew
+    ? `<span class="rating-star">★</span><span>${parseFloat(item.rating).toFixed(1)}</span>`
+    : `<span class="new-pill">NEW</span>`;
+
+  const yearStr = item.year ? `<span>${esc(item.year)}</span>` : '';
+  const metaSep = item.year && !isNew ? ' · ' : '';
+
+  const posterHTML = item.poster_url
+    ? `<img src="${esc(item.poster_url)}" loading="lazy"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+         alt="${esc(item.title)}">
+       <div class="poster-fallback" style="display:none">🎬</div>`
+    : `<div class="poster-fallback">🎬</div>`;
+
+  const dbClass = item.is_db ? ' db-card' : '';
+
+  return `
+  <div class="card${dbClass}">
+    <div class="card-poster-wrap">
+      ${posterHTML}
+      <div class="ep-badge">${esc(item.badge||'New')}</div>
+    </div>
+    <div class="card-info">
+      <div class="card-title">${esc(item.title)}</div>
+      <div class="card-meta">
+        ${yearStr}${yearStr&&!isNew?'<span>·</span>':''}
+        ${ratingStr}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Skeleton ── */
+function renderSkeleton(){
+  const c = document.getElementById('content');
+  let h = '<div class="sk sk-header"></div><div class="sk-grid">';
+  for(let i=0;i<6;i++) h += '<div class="sk sk-card"></div>';
+  h += '</div><div class="sk sk-header" style="margin-top:16px"></div><div class="sk-grid">';
+  for(let i=0;i<4;i++) h += '<div class="sk sk-card"></div>';
+  h += '</div>';
+  c.innerHTML = h;
+}
+
+/* ── Render ── */
+function render(data){
+  const c = document.getElementById('content');
+  const q = searchQuery.toLowerCase();
+
+  let dbItems   = data.db_series   || [];
+  let otherItems= data.other_series|| [];
+
+  if(q){
+    const match = e =>
+      (e.title||'').toLowerCase().includes(q) ||
+      (e.year||'').includes(q) ||
+      (e.badge||'').toLowerCase().includes(q);
+    dbItems    = dbItems.filter(match);
+    otherItems = otherItems.filter(match);
+  }
+
+  if(!dbItems.length && !otherItems.length){
+    c.innerHTML = `<div class="empty">
+      <div class="empty-icon">📭</div>
+      <p>${q ? 'No matching series found.' : 'No releases found today.<br>Check back later!'}</p>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+
+  if(dbItems.length){
+    html += `
+    <div class="section-header">
+      <span class="dot"></span>
+      DATABASE SERIES
+      <span class="count-pill">${dbItems.length}</span>
+    </div>
+    <div class="cards-grid">`;
+    dbItems.forEach(e => { html += cardHTML(e); });
+    html += '</div>';
+  }
+
+  if(otherItems.length){
+    html += `
+    <div class="section-header other">
+      <span class="dot"></span>
+      OTHER SERIES
+      <span class="count-pill">${otherItems.length}</span>
+    </div>
+    <div class="cards-grid">`;
+    otherItems.forEach(e => { html += cardHTML(e); });
+    html += '</div>';
+  }
+
+  c.innerHTML = html;
+}
+
+/* ── Search ── */
+const searchInput = document.getElementById('search-input');
+const clearBtn    = document.getElementById('clear-btn');
+
+searchInput.addEventListener('input', () => {
+  searchQuery = searchInput.value.trim();
+  clearBtn.style.display = searchQuery ? 'block' : 'none';
+  render(allData);
+});
+
+function clearSearch(){
+  searchInput.value = '';
+  searchQuery = '';
+  clearBtn.style.display = 'none';
+  render(allData);
+}
+
+/* ── Load ── */
+async function load(){
+  renderSkeleton();
+  try{
+    const resp = await fetch('/api/releases');
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    if(!json.ok) throw new Error(json.error||'API error');
+    allData = {
+      db_series:    json.db_series    || [],
+      other_series: json.other_series || [],
+    };
+    document.getElementById('loading').style.display = 'none';
+    render(allData);
+  }catch(err){
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').innerHTML = `<div class="empty">
+      <div class="empty-icon">⚠️</div>
+      <p>Could not load releases.<br><small style="opacity:.6">${esc(err.message)}</small></p>
+    </div>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

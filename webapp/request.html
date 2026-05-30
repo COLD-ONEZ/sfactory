@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <title>Request Series</title>
+  
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+
+:root{
+  --bg:#050816;
+  --surface:rgba(18,22,40,.78);
+  --card:rgba(16,20,36,.86);
+  --border:rgba(255,255,255,.08);
+
+  --accent:#ff4fa3;
+  --accent2:#7a5cff;
+  --accent3:#4da3ff;
+
+  --text:#f4f7ff;
+  --muted:#97a1ba;
+
+  --radius:28px;
+  --rsm:20px;
+
+  --shadow:
+    0 15px 40px rgba(0,0,0,.45),
+    0 0 30px rgba(122,92,255,.08);
+}
+
+
+
+body{
+  background:
+    radial-gradient(circle at top left,
+      rgba(122,92,255,.22),
+      transparent 35%),
+
+    radial-gradient(circle at top right,
+      rgba(255,79,163,.18),
+      transparent 30%),
+
+    linear-gradient(
+      180deg,
+      #040714,
+      #08101f 45%,
+      #050816
+    );
+
+  color:var(--text);
+
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+
+  min-height:100vh;
+  overflow-x:hidden;
+  padding-bottom:120px;
+}
+
+
+#loading{
+  position:fixed;
+  inset:0;
+  background:#050816;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  z-index:1000;
+}
+
+.ring{
+  width:50px;
+  height:50px;
+  border:4px solid rgba(255,255,255,.08);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+#loading p{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.search-wrap{
+  padding:16px;
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter:blur(20px);
+  background:rgba(5,8,22,.72);
+}
+
+.search-box{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:rgba(15,18,32,.92);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  padding:16px 18px;
+  box-shadow:
+    0 15px 40px rgba(0,0,0,.45),
+    0 0 25px rgba(122,92,255,.10);
+}
+
+.search-box input{
+  flex:1;
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-size:16px;
+}
+
+.search-box input::placeholder{
+  color:#8b93a7;
+}
+
+.search-icon,
+.clear-btn{
+  color:#aab2c5;
+  font-size:18px;
+}
+
+.clear-btn{
+  background:none;
+  border:none;
+  cursor:pointer;
+  display:none;
+}
+
+.section-hdr{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:18px 18px 10px;
+  font-size:13px;
+  font-weight:800;
+  color:#b7bfd5;
+  letter-spacing:1.4px;
+  text-transform:uppercase;
+}
+
+.section-hdr::before{
+  content:'';
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 0 15px rgba(255,79,163,.55);
+}
+
+.card{
+  display:flex;
+  align-items:center;
+  margin:10px 16px;
+  border-radius:24px;
+  background:linear-gradient(135deg, rgba(28,32,52,.96), rgba(12,14,26,.92));
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+  cursor:pointer;
+  transition:.22s ease;
+  box-shadow:0 12px 25px rgba(0,0,0,.35);
+  backdrop-filter:blur(20px);
+}
+
+.card:hover{
+  transform:translateY(-2px);
+}
+
+.card.selected{
+  border-color:rgba(255,77,109,.55);
+  box-shadow:0 0 0 1px rgba(255,77,109,.2), 0 14px 30px rgba(255,77,109,.18);
+}
+
+.card-poster,
+.card-poster-fallback{
+  width:82px;
+  height:116px;
+  flex-shrink:0;
+}
+
+.card-poster{
+  object-fit:cover;
+}
+
+.card-poster-fallback{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#111827;
+  color:#6b7280;
+  font-size:24px;
+}
+
+.card-divider{
+  width:1px;
+  height:82px;
+  background:linear-gradient(to bottom, transparent, rgba(255,255,255,.14), transparent);
+}
+
+.card-info{
+  flex:1;
+  padding:18px;
+  min-width:0;
+}
+
+.card-title{
+  font-size:22px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.card-sub{
+  margin-top:6px;
+  font-size:15px;
+  color:#97a1b7;
+}
+
+/* Request count badge shown on existing request cards */
+.req-badge{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin-top:8px;
+  font-size:12px;
+  color:#ff77b7;
+  font-weight:700;
+}
+
+.req-badge-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#ff77b7;
+  flex-shrink:0;
+}
+
+.card-right{
+  margin-right:18px;
+  padding:12px 16px;
+  border-radius:16px;
+  text-align:center;
+  min-width:72px;
+}
+
+.card-right.new-tag{
+  background:rgba(77,163,255,.12);
+  border:1px solid rgba(77,163,255,.30);
+}
+
+.card-right.vote-tag{
+  background:rgba(255,79,163,.10);
+  border:1px solid rgba(255,79,163,.30);
+}
+
+.req-label{
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+  color:#8a96b0;
+  line-height:1.3;
+}
+
+.req-count{
+  display:block;
+  font-size:22px;
+  font-weight:800;
+  color:#ff77b7;
+  margin-top:2px;
+}
+
+.new-text{
+  display:block;
+  font-size:14px;
+  font-weight:800;
+  color:#4da3ff;
+  margin-top:2px;
+}
+
+.empty{
+  padding:60px 24px;
+  text-align:center;
+  color:var(--muted);
+}
+
+.empty-icon{
+  font-size:44px;
+  margin-bottom:14px;
+}
+
+.empty p{
+  font-size:15px;
+  line-height:1.6;
+}
+
+#action-bar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  padding:16px;
+  background:rgba(5,8,22,.84);
+  backdrop-filter:blur(18px);
+  border-top:1px solid rgba(255,255,255,.08);
+  display:none;
+}
+
+#action-bar.show{
+  display:flex;
+  gap:12px;
+}
+
+.action-btn{
+  flex:1;
+  padding:18px;
+  border:none;
+  border-radius:20px;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+  color:#fff;
+  background:linear-gradient(135deg,var(--accent),#ff296d);
+  box-shadow:0 12px 25px rgba(255,77,109,.28);
+}
+
+.action-btn:active{
+  transform:scale(.98);
+}
+
+.action-btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.sk{
+  background:linear-gradient(90deg,#111827 25%,#1f2937 50%,#111827 75%);
+  background-size:200% 100%;
+  animation:sh 1.2s infinite;
+}
+
+@keyframes sh{
+  to{background-position:-200% 0}
+}
+
+.sk-card{
+  height:116px;
+  margin:10px 16px;
+  border-radius:24px;
+}
+
+.sk-label{
+  height:14px;
+  width:120px;
+  margin:18px 18px 8px;
+  border-radius:999px;
+}
+
+#toast{
+  position:fixed;
+  bottom:100px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(12,14,26,.95);
+  color:#fff;
+  padding:12px 18px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.08);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .25s;
+  z-index:999;
+  white-space:nowrap;
+  max-width:90vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+</style>
+
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="ring"></div>
+  <p>Loading requests…</p>
+</div>
+
+<!-- Search -->
+<div class="search-wrap">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input id="search-input" type="text" placeholder="Search or request a series…" autocomplete="off"/>
+    <button class="clear-btn" id="clear-btn" onclick="clearSearch()">✕</button>
+  </div>
+</div>
+
+<!-- Content -->
+<div id="content"></div>
+
+<!-- Action bar -->
+<div id="action-bar">
+  <button class="action-btn" id="request-btn" onclick="submitRequest()">📋 Request</button>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if(tg){ tg.ready(); tg.expand(); }
+
+let allRequests = [];        // existing pending requests from DB (sorted by request_count desc)
+let tmdbResults = [];        // current TMDB search results
+let selectedTmdbId = null;   // tmdb_id string of selected item
+let selectedIsNew = false;   // whether selected item is a new TMDB result
+let searchTimeout = null;
+let tmdbTimeout = null;
+let submitting = false;
+
+// ── Load existing requests ───────────────────────────────────────────────────
+async function load(){
+  renderSkeleton();
+  try{
+    const r = await fetch('/api/requests');
+    const data = await r.json();
+    // Already sorted by request_count desc from backend
+    allRequests = data.requests || [];
+    renderAll(allRequests, []);
+  } catch(e){
+    document.getElementById('content').innerHTML =
+      `<div class="empty"><div class="empty-icon">⚠️</div><p>Failed to load. Please retry.</p></div>`;
+  }
+  document.getElementById('loading').style.display='none';
+}
+
+function renderSkeleton(){
+  let html='<div style="height:8px"></div>';
+  for(let i=0;i<6;i++) html+='<div class="sk sk-card"></div>';
+  document.getElementById('content').innerHTML=html;
+}
+
+// ── Card HTML ────────────────────────────────────────────────────────────────
+function cardHTML(item, isNew){
+  const poster = item.poster_url
+    ? `<img class="card-poster" src="${esc(item.poster_url)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      +`<div class="card-poster-fallback" style="display:none">🎬</div>`
+    : `<div class="card-poster-fallback">🎬</div>`;
+
+  const cardId = isNew ? `new_${item.tmdb_id}` : `req_${item.tmdb_id}`;
+  const isSelected = selectedTmdbId === String(item.tmdb_id) && selectedIsNew === isNew;
+  const selCls = isSelected ? ' selected' : '';
+
+  let rightSection;
+  if(isNew){
+    rightSection = `<div class="card-right new-tag"><span class="req-label">New</span><span class="new-text">Request</span></div>`;
+  } else {
+    const count = item.request_count || 0;
+    rightSection = `
+      <div class="card-right vote-tag">
+        <span class="req-label">Requests</span>
+        <span class="req-count">${count}</span>
+      </div>`;
+  }
+
+  // For existing requests: show request count inside card info too
+  const countBadge = (!isNew && (item.request_count > 0))
+    ? `<div class="req-badge"><span class="req-badge-dot"></span>${item.request_count} ${item.request_count === 1 ? 'person' : 'people'} requested</div>`
+    : '';
+
+  return `
+  <div class="card${selCls}" id="card-${cardId}"
+       data-tmdb="${esc(item.tmdb_id)}"
+       data-isnew="${isNew ? '1' : '0'}"
+       onclick="handleCardClick(this)">
+    ${poster}
+    <div class="card-divider"></div>
+    <div class="card-info">
+      <div class="card-title">${esc(item.title)}</div>
+      ${item.year ? `<div class="card-sub">${esc(item.year)}</div>` : ''}
+      ${countBadge}
+    </div>
+    ${rightSection}
+  </div>`;
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderAll(requests, tmdbItems){
+  const content = document.getElementById('content');
+  let html = '';
+
+  if(tmdbItems.length){
+    html += `<div class="section-hdr">Add New Request</div>`;
+    tmdbItems.forEach(t => { html += cardHTML(t, true); });
+  }
+
+  if(requests.length){
+    if(tmdbItems.length) html += `<div class="section-hdr">Pending Requests</div>`;
+    // Requests already sorted by request_count desc from backend
+    requests.forEach(item => { html += cardHTML(item, false); });
+  } else if(!tmdbItems.length){
+    html = `<div class="empty"><div class="empty-icon">📋</div><p>No pending requests yet.<br>Search for a series to request it!</p></div>`;
+  }
+
+  content.innerHTML = html;
+}
+
+// ── Card click handler ───────────────────────────────────────────────────────
+function handleCardClick(el){
+  const tmdbId = el.dataset.tmdb;
+  const isNew = el.dataset.isnew === '1';
+
+  let item;
+  if(isNew){
+    item = tmdbResults.find(t => String(t.tmdb_id) === String(tmdbId));
+  } else {
+    item = allRequests.find(r => String(r.tmdb_id) === String(tmdbId));
+  }
+  if(!item) return;
+
+  _select(item, isNew);
+}
+
+function _select(item, isNew){
+  // Remove selection highlight from all cards
+  document.querySelectorAll('.card.selected').forEach(el => el.classList.remove('selected'));
+
+  // Toggle off if same card clicked again
+  if(selectedTmdbId === String(item.tmdb_id) && selectedIsNew === isNew){
+    selectedTmdbId = null;
+    selectedIsNew = false;
+    hideActionBar();
+    return;
+  }
+
+  selectedTmdbId = String(item.tmdb_id);
+  selectedIsNew = isNew;
+
+  // Highlight the clicked card
+  const cardId = isNew ? `new_${item.tmdb_id}` : `req_${item.tmdb_id}`;
+  const el = document.getElementById('card-' + cardId);
+  if(el) el.classList.add('selected');
+
+  // Update button text
+  const btn = document.getElementById('request-btn');
+  btn.textContent = isNew ? '📋 Request This Series' : '📋 Vote / Re-Request';
+  btn.disabled = false;
+
+  showActionBar();
+}
+
+function showActionBar(){ document.getElementById('action-bar').classList.add('show'); }
+function hideActionBar(){ document.getElementById('action-bar').classList.remove('show'); }
+
+// ── Get currently selected item object ───────────────────────────────────────
+function getSelectedItem(){
+  if(!selectedTmdbId) return null;
+  if(selectedIsNew){
+    return tmdbResults.find(t => String(t.tmdb_id) === selectedTmdbId) || null;
+  } else {
+    return allRequests.find(r => String(r.tmdb_id) === selectedTmdbId) || null;
+  }
+}
+
+// ── Search ───────────────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('input', function(){
+  const q = this.value.trim();
+  document.getElementById('clear-btn').style.display = q ? 'block' : 'none';
+  clearTimeout(searchTimeout);
+  clearTimeout(tmdbTimeout);
+
+  if(!q){
+    tmdbResults = [];
+    renderAll(allRequests, []);
+    // Restore selection highlight if still visible
+    _restoreSelectionHighlight();
+    return;
+  }
+
+  // Filter local requests instantly
+  const lq = q.toLowerCase();
+  const filtered = allRequests.filter(r => r.title?.toLowerCase().includes(lq));
+  renderAll(filtered, tmdbResults);
+  _restoreSelectionHighlight();
+
+  // TMDB search after typing pause
+  tmdbTimeout = setTimeout(() => searchTMDB(q), 500);
+});
+
+async function searchTMDB(query){
+  try{
+    const r = await fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`);
+    if(!r.ok) return;
+    const data = await r.json();
+
+    // Map TMDB results to internal format
+    const rawResults = (data.results || []).map(t => ({
+      tmdb_id: String(t.id),
+      title: t.name || '',
+      year: (t.first_air_date || '').slice(0, 4),
+      poster_url: t.poster_path ? `https://image.tmdb.org/t/p/w200${t.poster_path}` : '',
+    }));
+
+    // Exclude series that are already in pending requests list
+    const existingReqIds = new Set(allRequests.map(r => String(r.tmdb_id)));
+    tmdbResults = rawResults.filter(t => !existingReqIds.has(t.tmdb_id));
+
+    // Re-filter local requests with current query
+    const lq = document.getElementById('search-input').value.trim().toLowerCase();
+    const filtered = allRequests.filter(r => r.title?.toLowerCase().includes(lq));
+    renderAll(filtered, tmdbResults);
+
+    // Restore selection highlight after re-render
+    _restoreSelectionHighlight();
+  } catch(e){ /* silent fail */ }
+}
+
+function _restoreSelectionHighlight(){
+  if(!selectedTmdbId) return;
+  const cardId = selectedIsNew ? `new_${selectedTmdbId}` : `req_${selectedTmdbId}`;
+  const cel = document.getElementById('card-' + cardId);
+  if(cel){
+    cel.classList.add('selected');
+  } else {
+    // Card no longer visible — keep selection state but don't show bar
+    // (user may have cleared search; restore bar when card is visible again)
+  }
+}
+
+function clearSearch(){
+  document.getElementById('search-input').value = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  tmdbResults = [];
+  renderAll(allRequests, []);
+  _restoreSelectionHighlight();
+}
+
+// ── Submit request ───────────────────────────────────────────────────────────
+async function submitRequest(){
+  const item = getSelectedItem();
+  if(!item || submitting) return;
+  submitting = true;
+
+  const btn = document.getElementById('request-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Submitting…';
+
+  // initData from Telegram WebApp (optional — backend falls back to IP if absent)
+  const initData = tg?.initData || '';
+
+  try{
+    const r = await fetch('/api/request/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: initData,
+        tmdb_id: item.tmdb_id,
+        title: item.title,
+        year: item.year || '',
+        poster_url: item.poster_url || '',
+      })
+    });
+    const data = await r.json();
+
+    if(data.ok){
+      showToast(data.message || '✅ Request submitted!');
+      // Clear selection and search, reload list
+      selectedTmdbId = null;
+      selectedIsNew = false;
+      tmdbResults = [];
+      hideActionBar();
+      document.getElementById('search-input').value = '';
+      document.getElementById('clear-btn').style.display = 'none';
+      await load();
+    } else if(data.error === 'already_requested'){
+      showToast('You already requested this series.');
+    } else if(data.error === 'weekly_limit'){
+      showToast(data.message || 'Weekly request limit reached (5 requests per week)');
+    } else {
+      showToast(data.error || 'Failed to submit.');
+    }
+  } catch(e){
+    showToast('Network error. Try again.');
+  }
+
+  submitting = false;
+  btn.disabled = false;
+
+  // Restore button text based on current selection
+  const currentItem = getSelectedItem();
+  if(currentItem){
+    btn.textContent = selectedIsNew ? '📋 Request This Series' : '📋 Vote / Re-Request';
+  } else {
+    btn.textContent = '📋 Request';
+  }
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg, duration=3200){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, duration);
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+load();
+</script>
+</body>
+</html>
